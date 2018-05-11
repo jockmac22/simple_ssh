@@ -28,9 +28,9 @@ module SimpleSsh
       log(:info, "SimpleSsh Execute: #{ssh_command}")
 
       if options.fetch(:interactive, false)
-        return `#{ssh_command}`
-      else
         return system(ssh_command)
+      else
+        return `#{ssh_command}`
       end
     end
 

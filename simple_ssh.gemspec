@@ -9,9 +9,9 @@ Gem::Specification.new do |spec|
   spec.authors       = ["Jocko"]
   spec.email         = ["jocko.macgregor@wowza.com"]
 
-  spec.summary       = %q{TODO: Write a short summary, because RubyGems requires one.}
-  spec.description   = %q{TODO: Write a longer description or delete this line.}
-  spec.homepage      = "TODO: Put your gem's website or public repo URL here."
+  spec.summary       = %q{A simple, Ruby based SSH tool. Execute commands easily on remote machines.}
+  spec.description   = %q{Simple SSH allows you to access remote machines and execute shell commands easily, and with few limitations. You can execute one-off calls, chain commands together for single execution, or even use pipes to generate command output. }
+  spec.homepage      = "https://github.com/jockmac22/simple_ssh"
   spec.license       = "MIT"
 
   # Prevent pushing this gem to RubyGems.org. To allow pushes either set the 'allowed_push_host'
@@ -33,4 +33,6 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency "bundler", "~> 1.16"
   spec.add_development_dependency "rake", "~> 10.0"
   spec.add_development_dependency "rspec", "~> 3.0"
+
+  spec.add_dependency "colorize"
 end

@@ -1,5 +1,10 @@
 require "bundler/setup"
 require "simple_ssh"
+require "simple_ssh/loggers/test"
+
+SimpleSsh.configure do |config|
+
+end
 
 RSpec.configure do |config|
   # Enable flags like --only-failures and --next-failure

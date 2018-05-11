@@ -1,4 +1,4 @@
-# SimpleSsh
+# Simple SSH
 
 Simple SSH is an easy to use SSH tool for Ruby.  This gem allows you quickly and easily execute commands on a remote server.
 
@@ -35,7 +35,7 @@ https://www.digitalocean.com/community/tutorials/how-to-configure-ssh-key-based-
 
 ## Global Configuration
 
-Simple SSH uses a standard Ruby configuration pattern, which global
+Simple SSH uses a standard Ruby configuration pattern, which makes global
 configuration easy.
 
 #### The basic configuration
@@ -134,7 +134,7 @@ end
 
 ### Configuring for Rails
 
-Globacl configuration for Rails is also easy.  Add an file to your
+Global configuration for Rails is also easy.  Add an file to your
 `config/intializers/` folder called `simple_ssh.rb`.  Add a configuration to the
 file similar to the example above (with your appropriate configurations of
 course).
@@ -211,7 +211,7 @@ The `pipe` method interprets subsequent method calls as shell commands (assuming
 they don't already have a predefined function), so you can use dot-notation to
 execute commands together as a pipeline.
 
-This example will return a list of application currently running under Ruby:
+This example will return a list of applications currently running with Ruby:
 ```ruby
 SimpleSsh.pipe.
   ps("-ax").

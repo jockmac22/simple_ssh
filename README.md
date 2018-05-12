@@ -158,30 +158,21 @@ all you need to do is this:
 SimpleSsh.!("ls -alF")
 ```
 
-The bang (!) method indicates that the SSH command is being executed.
-
 ## Execute chained commands
 
-Bash shells allow you to chain commands together using "&&" between each
+Simple SSH also allows you to chain commands together using "&&" between each
 command.
 
-Simple SSH allows you to intuitively generate a list of commands and then
-execute them using command chains.
-
-The `chain` method interprets subsequent method calls as shell commands
-(assuming they don't already have a predefined function), so you can use
-dot-notation to execute commands in sequence.
+The `chain` method accepts a block, and interprets subsequent block calls as
+shell commands (assuming they don't already have a predefined function).
 
 This example will change directories and get a list of files:
 ```ruby
 SimpleSsh.chain do
-  cd("/home/user").
+  cd("/home/user")
   ls("-alF")
 end
 ```
-
-*NOTE:* The bang (!) at the end is important, it tells Simple SSH to execute the
-chain of commands.
 
 This is the equivalent of executing the following command from the remote shell:
 ```bash
@@ -191,25 +182,22 @@ cd /home/user && ls -alF
 ### Chaining Commands with Paths or Special Characters
 
 If you have a shell command that has a command path, or special characters that
-don't play nicely with ruby, you can still chain them using the `<<()` method:
+don't play nicely with ruby, you can still add them to the chain using the
+`cmd!()` method:
 
 ```ruby
 SimpleSsh.chain do
   cd("/home/user")
-  <<("/path/to/some-command-that-doesnt-play-well.sh -with -ruby")
+  cmd!("/path/to/some-command-that-doesnt-play-well.sh -with -ruby")
 end
 ```
 
 ## Execute pipeline commands
 
-Bash shells allow you to pipeline commands using "|" between each command.
+Simple SSH also allows you to pipeline commands using "|" between each command.
 
-Simple SSH allows you to intuitively generate a list of commands and then
-execute them as a pipeline.
-
-The `pipe` method interprets subsequent method calls as shell commands (assuming
-they don't already have a predefined function), so you can use dot-notation to
-execute commands together as a pipeline.
+The `pipe` method accepts a block, and interprets subsequent block calls as
+shell commands (assuming they don't already have a predefined function).
 
 This example will return a list of applications currently running with Ruby:
 ```ruby
@@ -224,19 +212,16 @@ This is the equivalent of executing the following command from the remote shell:
 ps -ax | grep 'ruby'
 ```
 
-*NOTE:* The bang (!) at the end is important, it tells Simple SSH to execute the
-pipeline of commands.
-
 ### Pipelining Commands with Paths or Special Characters
 
 If you have a shell command that has a command path, or special characters that
-don't play nicely with ruby, you can still pipeline them using the `<<()`
+don't play nicely with ruby, you can still pipeline them using the `cmd!()`
 method:
 
 ```ruby
 SimpleSsh.pipe do
   ps("-ax")
-  <<("/path/to/some-command-that-doesnt-play-well.sh -with -ruby")
+  cmd!("/path/to/some-command-that-doesnt-play-well.sh -with -ruby")
 end
 ```
 
@@ -244,11 +229,11 @@ end
 
 It's possible to inject data into the SSH command using the `inject()` method.
 
-This method essentally adds the SSH command to the end of a pipeline.  Each time
+This method adds the SSH command to the end of a pipeline.  Each time
 you call the `inject()` method, a command is added to the pipeline before the
 SSH call.
 
-If I wanted to inject content into the SSH command, I might do this:
+Here's an example
 ```ruby
 SimpleSsh.inject("echo 'test'").!("cat | grep 'test'")
 ```

@@ -21,6 +21,12 @@ module SimpleSsh
       @list = nil
     end
 
+    # Add a command directly to the list
+    #
+    def cmd!(command)
+      self << command
+    end
+
     # Generates the join string used to join multiple shell commands based on
     # the current execution mode.
     #

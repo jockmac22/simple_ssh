@@ -1,23 +1,16 @@
-require 'simple_ssh/loggers/default'
+require 'simple_ssh/loggers/file_path'
 
 module SimpleSsh
   module Loggers
 
     # A basic output logger that dumps output to a test log file.
-    class Test < Default
+    class Test < FilePath
 
       def initialize
-        @file   = nil
-        begin
-          @file   = file.open('./simple_ssh_test.log', 'w')
-        rescue Exception => e
-          puts "!!! Could not open the test log file: #{e.message} -- continuing without logging"
-          @file   = nil
-        end
-      end
+        super('./simple_ssh_test.log')
 
-      def write(msg)
-        @file.puts msg unless @file.nil?
+        self.info("-"*80)
+        self.info("Test started!")
       end
     end
 

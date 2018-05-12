@@ -1,7 +1,9 @@
 require "simple_ssh/version"
 require "simple_ssh/configuration"
+require "simple_ssh/commands"
 require "simple_ssh/ssh"
 require "simple_ssh/loggers/default"
+require "simple_ssh/loggers/file_path"
 
 module SimpleSsh
 
@@ -22,11 +24,15 @@ module SimpleSsh
     Ssh.new(config).!(commands, config)
   end
 
-  def self.chain(config={})
-    Ssh.new(config).chain
+  def self.chain(config={}, &block)
+    Ssh.new(config).chain(&block)
   end
 
   def self.pipe(config={})
     Ssh.new(config).pipe
+  end
+
+  def self.inject(command)
+    Ssh.new(config).inject(command)
   end
 end

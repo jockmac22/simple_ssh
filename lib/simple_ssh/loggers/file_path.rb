@@ -1,11 +1,13 @@
-require 'logger'
+require 'simple_ssh/loggers/default'
 
 module SimpleSsh
   module Loggers
-    # A basic output logger that dumps output to STDOUT.
-    class Default < ::Logger
-      def initialize
-        super(STDOUT)
+
+    # A basic output logger that dumps output to a test log file.
+    class FilePath < Logger
+
+      def initialize(file_path)
+        super(file_path, 'daily')
 
         self.progname = "SimpleSSH"
         self.datetime_format = '%Y-%m-%d %H:%M:%S'
@@ -14,5 +16,6 @@ module SimpleSsh
         end
       end
     end
+
   end
 end

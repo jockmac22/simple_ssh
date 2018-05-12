@@ -10,7 +10,6 @@ module SimpleSsh
     attr_reader :config
 
     def initialize(overrides={})
-      @execution_mode = overrides.fetch(:mode, :single)
       overrides.delete(:mode)
       @config = SimpleSsh.configuration.to_h(overrides)
     end
@@ -20,12 +19,13 @@ module SimpleSsh
     def !(*commands)
       options  = commands.last.is_a?(Hash) ? commands.pop : {}
 
-      commands = @command_chain.clone if chain? || pipe?
       commands.unshift("cd #{options[:base_path]}") if options[:base_path]
 
       ssh_command = ssh_command(commands, config)
 
-      log(:info, "SimpleSsh Execute: #{ssh_command}")
+      log(:info, ssh_command)
+
+      clear_inject
 
       if options.fetch(:interactive, false)
         return system(ssh_command)
@@ -34,57 +34,18 @@ module SimpleSsh
       end
     end
 
-
-    # Generate a command to exec in the remote shell.  This process will
-    # either add the command to the command chain (if it's in pipe or chain
-    # execution mode) or directly exec the command (if it's in single
-    # execution mode)
+    # Pipelines the results of a command into the SSH call.
     #
-    # @overload sh(command, *args) [single execution mode]
-    #   @param command [String] The remote command to call
-    #   @param args [Array] An array of arguments to pass to the command.
-    #
-    #   @return [String] The results of the SSH execution
-    #
-    # @overload sh(command, *args) [chain|pipe execution mode]
-    #   @param command [String] The remote command to call
-    #   @param args [Array] An array of arguments to pass to the command.
-    #
-    #   @return [SimpleSsh::Ssh] A reference to the SSH instance so additional calls can be added.
-    #
-    def sh(*args)
-      puts "args: #{args}"
-      options     = !args.nil? ? (args.last.is_a?(Hash) ? args.pop : {}) : {}
-      ssh_command = args.join(" ")
-
-      if @execution_mode == :chain || @execution_mode == :pipe
-        add_command(ssh_command)
-        return self
-      else
-        return self.!(ssh_command, options)
-      end
+    def inject(command)
+      @inject ||= []
+      @inject << command
+      return self
     end
 
-    # Adds a command to the command chain.
+    # Clears the inject stack
     #
-    # @param command [String] The command to add to the command chain
-    #
-    def add_command(command)
-      @command_chain ||= []
-      @command_chain << command
-    end
-
-    # Clears out the command chain.
-    #
-    def clear_commands()
-      @command_chain = nil
-    end
-
-    # Turn any previously undefined method call into a shell command.
-    #
-    def method_missing(method, *args)
-      args.unshift(method.to_s)
-      return sh(*args)
+    def clear_inject
+      @inject = nil
     end
 
     # Generates the full SSH command to execute on a single command or an array
@@ -101,8 +62,10 @@ module SimpleSsh
     #
     def ssh_command(commands, overrides={})
       config        = SimpleSsh.configuration.to_h(overrides)
-      commands      = [ commands ] if commands.is_a?(String)
-      "#{config[:binary_path]} #{param_string(config)} #{config[:user]}@#{config[:hostname]} '#{remote_shell_command(commands, config)}'"
+      ssh_commands  = []
+      ssh_commands  << @injects.join(" | ") if (@injects && @injects.length > 0)
+      ssh_commands  << "#{config[:binary_path]} #{param_string(config)} #{config[:user]}@#{config[:hostname]} '#{remote_shell_command(commands, config)}'"
+      ssh_commands.join(" | ")
     end
 
     # Generates the remote shell command based on a single command or an array
@@ -116,12 +79,16 @@ module SimpleSsh
     #   @param commands [Array<String>] An array of commands to execute in the bash shell
     #   @param overrides [Hash] A hash of configuration values to override.
     #
+    # @overload remote_shell_command(commands, overrides={})
+    #   @param commands [SimpleSsh::Commands] A commands object
+    #   @param overrides [Hash] A hash of configuration values to override.
+    #
     def remote_shell_command(commands, overrides={})
-      config        = SimpleSsh.configuration.to_h(overrides)
-      commands      = [ commands ] if commands.is_a?(String)
-      sh_command    = commands.join(command_join_string)
-      return sh_command if (config[:remote_shell].nil? || config[:remote_shell].length == 0)
-      return "#{config[:remote_shell]} -l -c \"#{sh_command}\""
+      commands  = Commands.new(commands: commands) if commands.is_a?(Array)
+      config    = SimpleSsh.configuration.to_h(overrides)
+
+      return commands.to_s if (config[:remote_shell].nil? || config[:remote_shell].length == 0)
+      return "#{config[:remote_shell]} -l -c \"#{commands.to_s}\""
     end
 
 
@@ -152,60 +119,21 @@ module SimpleSsh
       params.join(" ")
     end
 
-    # Generates the join string used to join multiple shell commands based on
-    # the current execution mode.
+    # Execute a block of commands in chain mode
     #
-    # @return [String] The command join string
-    #
-    def command_join_string
-      pipe? ? " | " : " && "
-    end
-
-    # Set the SSH execution into single mode, so calls will be executed as
-    # individual SSH sessions
-    #
-    def single
-      @execution_mode = :single
-      clear_commands
-      return self
-    end
-
-    # Determine if the execution mode is :single
-    #
-    # @return [Boolean] An indication that the execution mode is currently :single
-    #
-    def single?
-      @execution_mode == :single
-    end
-
-    # Set the SSH execution into chain mode, so all calls will be executed
-    # inside one SSH session as a chain of commands.
-    #
-    def chain
-      new_config        = @config.clone
-      new_config[:mode] = :chain
-      return self.class.new(new_config)
-    end
-
-    # Determine if the execution mode is :chain
-    #
-    def chain?
-      @execution_mode == :chain
+    def chain(&block)
+      commands = Commands.new(mode: :chain)
+      commands.instance_eval(&block)
+      self.!(commands)
     end
 
     # Set the SSH execution into pipe mode, so all calls will be executed
     # inside one SSH session as a pipeline of commands.
     #
-    def pipe
-      new_config        = @config.clone
-      new_config[:mode] = :pipe
-      return self.class.new(new_config)
-    end
-
-    # Determine if the execution mode is :pipe
-    #
-    def pipe?
-      @execution_mode == :pipe
+    def pipe(&block)
+      cmds = Commands.new(mode: :pipe)
+      cmds.instance_eval(&block)
+      self.!(cmds.to_a)
     end
 
     # Log a message to the logger

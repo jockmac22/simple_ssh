@@ -174,10 +174,10 @@ dot-notation to execute commands in sequence.
 
 This example will change directories and get a list of files:
 ```ruby
-SimpleSsh.chain.
+SimpleSsh.chain do
   cd("/home/user").
-  ls("-alF").
-  !
+  ls("-alF")
+end
 ```
 
 *NOTE:* The bang (!) at the end is important, it tells Simple SSH to execute the
@@ -191,13 +191,13 @@ cd /home/user && ls -alF
 ### Chaining Commands with Paths or Special Characters
 
 If you have a shell command that has a command path, or special characters that
-don't play nicely with ruby, you can still chain them using the `sh()` method:
+don't play nicely with ruby, you can still chain them using the `<<()` method:
 
 ```ruby
-SimpleSsh.chain.
-  cd("/home/user").
-  sh("/path/to/some-command-that-doesnt-play-well.sh -with -ruby")
-  !
+SimpleSsh.chain do
+  cd("/home/user")
+  <<("/path/to/some-command-that-doesnt-play-well.sh -with -ruby")
+end
 ```
 
 ## Execute pipeline commands
@@ -213,10 +213,10 @@ execute commands together as a pipeline.
 
 This example will return a list of applications currently running with Ruby:
 ```ruby
-SimpleSsh.pipe.
-  ps("-ax").
-  grep("'ruby'").
-  !
+SimpleSsh.pipe do
+  ps("-ax")
+  grep("'ruby'")
+end
 ```
 
 This is the equivalent of executing the following command from the remote shell:
@@ -230,15 +230,48 @@ pipeline of commands.
 ### Pipelining Commands with Paths or Special Characters
 
 If you have a shell command that has a command path, or special characters that
-don't play nicely with ruby, you can still pipeline them using the `sh()`
+don't play nicely with ruby, you can still pipeline them using the `<<()`
 method:
 
 ```ruby
-SimpleSsh.pipe.
-  ps("-ax").
-  sh("/path/to/some-command-that-doesnt-play-well.sh -with -ruby")
-  !
+SimpleSsh.pipe do
+  ps("-ax")
+  <<("/path/to/some-command-that-doesnt-play-well.sh -with -ruby")
+end
 ```
+
+## Injecting Data Into the SSH Command
+
+It's possible to inject data into the SSH command using the `inject()` method.
+
+This method essentally adds the SSH command to the end of a pipeline.  Each time
+you call the `inject()` method, a command is added to the pipeline before the
+SSH call.
+
+If I wanted to inject content into the SSH command, I might do this:
+```ruby
+SimpleSsh.inject("echo 'test'").!("cat | grep 'test'")
+```
+
+This will generate the shell equivalent of this command:
+
+```bash
+echo 'test' | ssh user@host.com "cat | grep 'test'"
+```
+
+You can add multiple injections to the pipeline by repeating the `inject()`
+method call.
+
+```ruby
+SimpleSsh.inject("echo 'test'").inject("dosomething").!("cat | grep 'test'")
+```
+
+This will generate the shell equivalent of this command:
+
+```bash
+echo 'test' | dosomething | ssh user@host.com "cat | grep 'test'"
+```
+
 
 ## Development
 

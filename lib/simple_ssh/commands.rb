@@ -56,7 +56,6 @@ module SimpleSsh
     # Turn any previously undefined method call into a shell command.
     #
     def method_missing(method, *args)
-      puts "Method Missing: #{method} | #{args}"
       args.unshift(method.to_s)
       self << args.join(" ")
     end

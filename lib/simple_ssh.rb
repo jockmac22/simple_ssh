@@ -28,11 +28,11 @@ module SimpleSsh
     Ssh.new(config).chain(&block)
   end
 
-  def self.pipe(config={})
-    Ssh.new(config).pipe
+  def self.pipe(config={}, &block)
+    Ssh.new(config).pipe(&block)
   end
 
-  def self.inject(command)
+  def self.inject(command, config={})
     Ssh.new(config).inject(command)
   end
 end

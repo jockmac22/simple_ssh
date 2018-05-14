@@ -63,7 +63,7 @@ module SimpleSsh
     def ssh_command(commands, overrides={})
       config        = SimpleSsh.configuration.to_h(overrides)
       ssh_commands  = []
-      ssh_commands  << @injects.join(" | ") if (@injects && @injects.length > 0)
+      ssh_commands  << @inject.join(" | ") if (@inject && @inject.length > 0)
       ssh_commands  << "#{config[:binary_path]} #{param_string(config)} #{config[:user]}@#{config[:hostname]} '#{remote_shell_command(commands, config)}'"
       ssh_commands.join(" | ")
     end

@@ -26,12 +26,16 @@ module SimpleSsh
       log(:info, ssh_command)
 
       clear_inject
+      response = nil
 
       if options.fetch(:interactive, false)
-        return system(ssh_command)
+        response = system(ssh_command)
       else
-        return `#{ssh_command}`
+        response = `#{ssh_command}`
       end
+      log(:debug, "SSH Response: #{response.to_s}")
+
+      response
     end
 
     # Pipelines the results of a command into the SSH call.
